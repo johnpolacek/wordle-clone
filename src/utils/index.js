@@ -21,21 +21,34 @@ export function getLetterStatus(
   currRowIndex,
   keyState,
   tileState,
-  wordToBeGuessed
+  wordToBeGuessed,
 ) {
+  const letterOccurrences = {};
+  wordToBeGuessed.split("").forEach((letter) => {
+    letterOccurrences[letter] = (letterOccurrences[letter] || 0) + 1;
+  });
+
   const tempKeyState = JSON.parse(JSON.stringify(keyState));
-  const tempTileState = tileState.map(row => [...row]);
+  const tempTileState = tileState.map((row) => [...row]);
 
   tempTileState[currRowIndex] = currentRow.map((letter, i) => {
-    if (!letter) return '';
+    if (!letter) return "";
 
     if (letter === wordToBeGuessed[i]) {
       tempKeyState[EXACT].push(letter);
+      letterOccurrences[letter]--;
       return EXACT;
     }
+    return null;
+  });
 
-    if (wordToBeGuessed.includes(letter)) {
+  tempTileState[currRowIndex] = tempTileState[currRowIndex].map((state, i) => {
+    if (state !== null) return state; // Skip already marked as EXACT
+    const letter = currentRow[i];
+
+    if (wordToBeGuessed.includes(letter) && letterOccurrences[letter] > 0) {
       tempKeyState[ALMOST].push(letter);
+      letterOccurrences[letter]--;
       return ALMOST;
     }
 
@@ -44,7 +57,7 @@ export function getLetterStatus(
   });
 
   const isGameOver = tempTileState[currRowIndex].every(
-    _state => _state === EXACT
+    (_state) => _state === EXACT,
   );
   return {
     tileState: tempTileState,
